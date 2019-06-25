@@ -1,5 +1,5 @@
 pragma solidity ^0.5.2;
-
+//Se exponen todas las funciones publicas de Sistema Medico
 contract CentroMedicoInterface {
     function isProfessionalInMedicalCenter(address _address) public view returns(bool isProfByMedCenter);
     function setProfessionalInMedicalCenter(address _address) public;
