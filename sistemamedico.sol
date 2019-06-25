@@ -1,12 +1,20 @@
 pragma solidity ^0.5.2;
 
 import "github.com/OpenZeppelin/zeppelin-solidity/contracts/ownership/Ownable.sol";
-
+/*
+Este contrato permite gestionar 3 actores (admins, profesionales, centros medicos)
+abajo explico las variables principales
+admin: mapa de direcciones autorizada por el owner del contrato 
+para dar de alta => "Especialidades", "Profesionales Medicos", "Centros Medicos"
+professional: mapa de direcciones de medicos en el sistema;
+medicalCenter: mapa de direcciones de centros medicos en el sistema;
+speciality: array de especialidades medicas
+*/
 contract SistemaMedico is Ownable{
     event LogRecordWrite(address triggerId, address impactedId, uint dateTime);
 
-    string[] speciality; // Listado completo y validado de especialidades por el sistema medico
-    mapping (address => bool) private admins; // Operadores Autorizados del sistema medico
+    string[] speciality; 
+    mapping (address => bool) private admin; 
     mapping (address => Profesional) private professional;
     mapping (address => bool) private medicalCenter;
     
@@ -32,24 +40,27 @@ contract SistemaMedico is Ownable{
     }
     //*********************
     function isAdmin(address _address) public view returns(bool isAdm) {
-        return admins[_address];
+        return admin[_address];
     }
     
+    //Permite agregar un nuevo admin pero solo siendo owner del contrato
     function setAdmin(address _address) public onlyOwner() {
         require(!isAdmin(_address) && _address != address(0), "Administrador ya existe");
-        admins[_address] = true;
+        admin[_address] = true;
         adminCount++;
         emit LogRecordWrite(msg.sender, _address, now);
     }
     
+    //Permite remover un admin pero solo siendo owner del contrato
     function removeAdmin(address _address) public onlyOwner() {
         require(isAdmin(_address) && _address != address(0), "Administrador no existe");
-        admins[_address] = false;
-        delete admins[_address];
+        admin[_address] = false;
+        delete admin[_address];
         adminCount--;
         emit LogRecordWrite(msg.sender, _address, now);
     }
     
+    //Devuelve la cantidad admins pero solo siendo owner del contrato o admin del sistema medico
     function getAdminCount() public view onlyManager() onlyOwner() returns(uint quantity) {
         return adminCount;
     }
@@ -57,11 +68,12 @@ contract SistemaMedico is Ownable{
     //*********************      
     //*********************  
     
+    //Confirma si el medico esta activo o no
     function isProfessional(address _address) public view returns(bool isProf) {
         return professional[_address].active;
     }
     
-    //Cambiar para que lo gestione el admin
+    //Permite agregar un nuevo profesional medico pero solo siendo manager del contrato
     function setProfessional(address _address, uint[] memory _specialities) public onlyManager() {
         require(!isProfessional(_address) && _address != address(0), "Profesional ya existe");
         require(!isAdmin(_address), "No puede ingresar a un administrador como Medico");
@@ -72,6 +84,7 @@ contract SistemaMedico is Ownable{
         emit LogRecordWrite(msg.sender, _address, now);
     }
     
+    //Permite remover un nuevo profesional medico pero solo siendo manager del contrato
     function removeProfessional(address _address) public onlyManager() {
         require(isProfessional(_address) && _address != address(0), "Profesional no existe");
         professional[_address].active = false;
@@ -97,6 +110,7 @@ contract SistemaMedico is Ownable{
         speciality.push(_name);
     }
     
+    //Devuelve el Id de una especialidad siendo admin del sistema medico
     function getIdMedicalSpeciality(string memory _name) public view onlyManager returns (uint resultado) {
         for (uint i=0;speciality.length-1>=i;i++){
             if (keccak256(abi.encodePacked((_name))) == keccak256(abi.encodePacked((speciality[i])))) {
@@ -108,11 +122,12 @@ contract SistemaMedico is Ownable{
     //*********************      
     //*********************  
     
-    // gestiona la creación de Centros Médicos
+    // valida si el Centros Médico existe o no
     function isMedicalCenter(address _address) public view returns(bool isMedCenter) {
         return medicalCenter[_address];
     }
     
+    // Permite crear un nuevo centro medico solo al manager
     function setMedicalCenter(address _address) public onlyManager() {
         require(!isMedicalCenter(_address) && _address != address(0), "Centro Médico ya existe");
         require(!isProfessional(_address), "No puede ingresar un medico como centro medico");
@@ -122,6 +137,7 @@ contract SistemaMedico is Ownable{
         emit LogRecordWrite(msg.sender, _address, now);
     }
     
+    // Permite remover un centro medico solo al manager
     function removeMedicalCenter(address _address) public onlyManager() {
         require(isMedicalCenter(_address) && _address != address(0), "Centro Médico  no existe");
         medicalCenter[_address] = false;
@@ -129,6 +145,8 @@ contract SistemaMedico is Ownable{
         centerCount--;
         emit LogRecordWrite(msg.sender, _address, now);
     }
+    
+    //Devuelve la cantidad centros medicos pero solo siendo admin del sistema medico
     function getMedicalCenterCount() public view onlyManager() returns(uint quantity) {
         return centerCount;
     }
