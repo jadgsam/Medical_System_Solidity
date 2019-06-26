@@ -1,5 +1,5 @@
 pragma solidity ^0.5.2;
-
+//Se exponen todas las funciones publicas de Sistema Medico
 contract SistemaMedicoInteface {
     function isAdmin(address _address) public view returns(bool isAdm);
     function setAdmin(address _address) public;
@@ -16,4 +16,6 @@ contract SistemaMedicoInteface {
     function setMedicalCenter(address _address) public;
     function removeMedicalCenter(address _address) public;
     function getMedicalCenterCount() public view returns(uint quantity);
+    function isMedicalCenterInProfessional(address _medicalCenter, address _professional) public view returns(bool result); 
+    function setCentroMedicoToProfessional(address _medicalCenter, address _professional) public; 
 }  

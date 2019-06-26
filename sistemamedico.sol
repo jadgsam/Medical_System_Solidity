@@ -15,7 +15,7 @@ contract SistemaMedico is Ownable{
 
     string[] speciality; 
     mapping (address => bool) private admin; 
-    mapping (address => Profesional) private professional;
+    mapping (address => Profesional) private  professional;
     mapping (address => bool) private medicalCenter;
     
     uint adminCount=0;
@@ -25,6 +25,7 @@ contract SistemaMedico is Ownable{
     struct Profesional {
         bool active;
         uint[] idSpeciality; //se asocian especialidades al medico para su clasificación
+        address[] medicalCenter;
     }
     
     //Restringe el uso por parte de un manager
@@ -38,7 +39,10 @@ contract SistemaMedico is Ownable{
         require(isMedicalCenter(msg.sender), "No es un Centro Médico del sistema");
         _;
     }
+    
     //*********************
+    
+    //valida que la direccion pertenezca a un admin
     function isAdmin(address _address) public view returns(bool isAdm) {
         return admin[_address];
     }
@@ -94,10 +98,12 @@ contract SistemaMedico is Ownable{
         emit LogRecordWrite(msg.sender, _address, now);
     }
     
+    //devuelve el valor del contador de medicos
     function getProfessionalCount() public view onlyManager() returns(uint quantity) {
         return professionalCount;
     }
     
+    //devuelve las especialidades que posee un medico 
     function getProfessionalSpecialities(address _address) public view onlyManager() returns (uint[] memory specialities){
         return professional[_address].idSpeciality;
     }
@@ -149,6 +155,22 @@ contract SistemaMedico is Ownable{
     //Devuelve la cantidad centros medicos pero solo siendo admin del sistema medico
     function getMedicalCenterCount() public view onlyManager() returns(uint quantity) {
         return centerCount;
+    }
+    
+    //valida que el centro medico este asociado al medico
+    function isMedicalCenterInProfessional(address _medicalCenter, address _professional) public view returns(bool result) {
+        for(uint i=0;i<professional[_professional].medicalCenter.length;i++){
+            if (professional[_professional].medicalCenter[i] == _medicalCenter) {
+                return true;
+            } 
+        }
+        return false;
+    }
+    //asigna un centro medico a un medico
+    function setCentroMedicoToProfessional(address _medicalCenter, address _professional) public {
+        if (!isMedicalCenterInProfessional( _medicalCenter,  _professional)) {
+            professional[_professional].medicalCenter.push(_medicalCenter);
+        }
     }
 
     //*********************      
